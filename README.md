@@ -1,4 +1,4 @@
-QuickShiftForChrome
+QuickShift For Chrome
 ===================
 
 The original Chrome extension for moving tabs around with your keyboard, brought back from the dead! 
