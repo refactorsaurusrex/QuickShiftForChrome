@@ -1,0 +1,412 @@
+<html>
+<head>
+<script>
+var currentWindow;
+var dummyTabID = 0; 
+var targetWindow;
+var targetTab;
+var selectedAction;
+var windowTabQueues = [ [0], [0], [0] ]; // windowId's, tab0's, tab1's
+
+chrome.extension.onRequest.addListener(onKeyPress);
+
+chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo)
+{
+	var windowQueueIndex = 0;
+	
+	// Check to see if we already have a queue for this window.
+	for (var i = 0; i < windowTabQueues[0].length; i++)
+	{
+		if (windowTabQueues[0][i] == selectInfo.windowId)
+		{
+			// Queue already exists; set reference to proper index.
+			windowQueueIndex = i;
+		}
+	}
+	
+	// If index was not found, either set window id to queue index 0 or create new queue index.
+	if (windowQueueIndex == 0)
+	{
+		if (windowTabQueues[0][0] == 0)
+		{
+			windowTabQueues[0][0] = selectInfo.windowId;
+		}
+		else
+		{
+			windowQueueIndex = windowTabQueues[0].length;
+			windowTabQueues[0][windowQueueIndex] = selectInfo.windowId;
+		}
+	}
+	
+    if (windowTabQueues[1][windowQueueIndex] == 0)
+    {
+        windowTabQueues[1][windowQueueIndex] = tabId;
+    }  
+    else if (windowTabQueues[2][windowQueueIndex] == 0)
+    {
+        windowTabQueues[2][windowQueueIndex] = tabId;
+    }
+    else
+    {
+        windowTabQueues[1][windowQueueIndex] = windowTabQueues[2][windowQueueIndex];
+        windowTabQueues[2][windowQueueIndex] = tabId;
+    }
+});
+
+function toggleLastActiveTab(window)
+{
+	for (var i = 0; i < windowTabQueues[0].length; i++)
+	{
+		if (windowTabQueues[0][i] == window.id)
+		{
+			chrome.tabs.update(windowTabQueues[1][i], {selected: true});
+			break;
+		}
+	}
+}
+
+function getCustomHotkeyAction(keyCombination)
+{
+    for (var savedKey in window.localStorage)
+    {
+        if (window.localStorage[savedKey] == keyCombination)
+        {            
+            return savedKey;
+        }
+    }
+    
+    return "";
+}
+
+function getDefaultHotkeyAction(keyCombination)
+{   
+    switch (keyCombination)
+    {
+        case "Ctrl + Alt + Right":   return "moveTabToNextWindowKeyString";
+        case "Ctrl + Alt + Left":    return "moveTabToPreviousWindowKeyString";
+		
+		case "Ctrl + Shift + Up": 	 return "moveAllRightwardTabsToNextWindowKeyString";
+		case "Ctrl + Shift + Down":  return "moveAllLeftwardTabsToPreviousWindowKeyString";
+		
+        case "Ctrl + B":             return "toggleToLastFocusedKeyString";
+        case "Ctrl + Alt + M":       return "mergeAllTabsKeyString";
+		
+        case "Ctrl + Alt + 1":       return "reorderTo1KeyString";
+        case "Ctrl + Alt + 2":       return "reorderTo2KeyString";
+        case "Ctrl + Alt + 3":       return "reorderTo3KeyString";
+        case "Ctrl + Alt + 4":       return "reorderTo4KeyString";
+        case "Ctrl + Alt + 5":       return "reorderTo5KeyString";
+        case "Ctrl + Alt + 6":       return "reorderTo6KeyString";
+        case "Ctrl + Alt + 7":       return "reorderTo7KeyString";
+        case "Ctrl + Alt + 8":       return "reorderTo8KeyString";
+        case "Ctrl + Alt + 9":       return "reorderTo9KeyString";
+        case "Ctrl + Shift + End":   return "reorderToLastKeyString";
+		
+		case "Ctrl + Shift + Right": return "moveTabForwardKeyString";
+		case "Ctrl + Shift + Left":  return "moveTabBackwardKeyString";
+		
+        default:                     return "";      
+    }
+}
+
+function onKeyPress(request, sender, callback)
+{   
+    if (window.localStorage.length == 0 || window.localStorage == null)
+    {   
+        selectedAction = getDefaultHotkeyAction(request.action);
+    }
+    else
+    {
+        selectedAction = getCustomHotkeyAction(request.action);
+    }
+    
+    if (selectedAction == "")
+    {
+        return;
+    }
+    
+    if (selectedAction == "toggleToLastFocusedKeyString")
+    {
+		chrome.windows.getCurrent(toggleLastActiveTab);
+        return;
+    }
+
+    currentWindow = null;
+    targetTab = null;
+    
+   	chrome.tabs.getSelected(null, getSelectedChromeTab);
+}
+
+function getSelectedChromeTab(tab)
+{
+    targetTab = tab;
+    chrome.windows.getCurrent(getCurrentChromeWindow);
+} 
+
+function getCurrentChromeWindow(win)
+{
+    currentWindow = win;
+    if (selectedAction == "reorderToLastKeyString" ||
+	    selectedAction == "moveTabForwardKeyString" ||
+		selectedAction == "moveTabBackwardKeyString")
+    {
+        chrome.windows.getAll({ populate: true }, moveActiveTab);
+    }
+    else if (selectedAction.substr(0,9) == "reorderTo")
+    {
+    	chrome.tabs.move(targetTab.id, 
+        {
+            "windowId": win.id, 
+            "index": parseInt(selectedAction.charAt(9)) - 1
+        });
+    }
+    else
+    {	
+    	if (selectedAction == "mergeAllTabsKeyString")
+    	{
+    	   chrome.windows.getAll({ populate: true }, mergeAllTabs);
+    	}
+    	else if (selectedAction == "moveTabToPreviousWindowKeyString" || 
+                 selectedAction == "moveTabToNextWindowKeyString" ||
+				 selectedAction == "moveAllRightwardTabsToNextWindowKeyString" ||
+				 selectedAction == "moveAllLeftwardTabsToPreviousWindowKeyString")
+    	{
+    	   chrome.windows.getAll({ populate: true }, moveTabToDifferentWindow);
+    	}
+    }
+} 
+
+function moveActiveTab(chromeWindows)
+{
+    for (var i = 0; i < chromeWindows.length; i++)
+    {
+        if (chromeWindows[i].id == currentWindow.id)
+        {
+			var moveToIndex = 0;
+			switch (selectedAction)
+			{
+				case "reorderToLastKeyString":
+					moveToIndex = chromeWindows[i].tabs.length;
+					break;
+						
+				case "moveTabForwardKeyString":
+					moveToIndex = targetTab.index + 1;
+					if (moveToIndex > chromeWindows[i].tabs.length - 1)
+					{
+						moveToIndex = 0;
+					}
+					break;
+					
+				case "moveTabBackwardKeyString":
+					moveToIndex = targetTab.index - 1;
+					if (moveToIndex < 0)
+					{
+						moveToIndex = chromeWindows[i].tabs.length;
+					}
+					break;
+			}
+			
+        	chrome.tabs.move(targetTab.id, 
+                            {
+                                "windowId": chromeWindows[i].id, 
+                                "index": moveToIndex
+                            });		
+            return;
+        }
+    }
+}
+
+function mergeAllTabs(chromeWindows)
+{
+    var destinationIndex = 0;
+    for (var i = 0; i < chromeWindows.length; i++)
+    {
+        if (chromeWindows[i].id == currentWindow.id)
+        {
+            destinationIndex = i;
+            break;
+        }
+    }
+    
+    for (var i = 0; i < chromeWindows.length; i++)
+    {
+		// The value of targetWindow.tabs.length is static here; it does not increase 
+		// as we add tabs to the window. Thus, the value must be incremented manually.
+		var lengthAdjustment = 0;
+        if (chromeWindows[i].type == "normal" && chromeWindows[i].id != currentWindow.id)
+        {
+            for (var j = 0; j < chromeWindows[i].tabs.length; j++)
+            {
+                chrome.tabs.move(chromeWindows[i].tabs[j].id, 
+                                {
+                                    "windowId": currentWindow.id, 
+                                    "index": chromeWindows[destinationIndex].tabs.length + lengthAdjustment
+                                });
+				lengthAdjustment++;
+            }
+        }
+    }
+}
+
+function moveTabToDifferentWindow(chromeWindows)
+{    
+	// The tabs in the window that was active when action was executed.
+	var currentTabs = [];
+	
+	var useableWindows = new Array();
+	for (var i = 0; i < chromeWindows.length; i++)
+    {
+        if (chromeWindows[i].type == "normal" && (chromeWindows[i].incognito == currentWindow.incognito))
+        {
+            if (chromeWindows[i].id == currentWindow.id)
+			{
+				currentTabs = chromeWindows[i].tabs;
+			}
+			else
+            {
+				var windowDetails = new Array(2);
+				windowDetails[0] = chromeWindows[i];
+				windowDetails[1] =  chromeWindows[i].left - currentWindow.left;
+				
+				useableWindows.push(windowDetails);
+            }
+        }
+    }
+	      
+    if (useableWindows.length == 0)
+    {
+        chrome.windows.create(
+								{
+									"url": "http://www.google.com/", 
+									"incognito": currentWindow.incognito
+								},
+								afterNewChromeWindowCreated);
+        return;
+    }
+	
+	// Sort the usable windows by horizontal screen placement.
+	for (var i = 0; i < useableWindows.length - 1; i++)
+	{
+		for (var j = 1; j < useableWindows.length; j++)
+		{
+			if (useableWindows[i][1] > useableWindows[j][1])
+			{
+				var temp = useableWindows[i];
+				useableWindows[i] = useableWindows[j];
+				useableWindows[j] = temp;	
+			}
+		}
+	}
+	
+	targetWindow = null;
+	
+	if (selectedAction == "moveTabToNextWindowKeyString" ||
+	    selectedAction == "moveAllRightwardTabsToNextWindowKeyString")
+	{
+		for (var i = 0; i < useableWindows.length; i++)
+		{
+			if (useableWindows[i][1] > 0)
+			{
+				targetWindow = useableWindows[i][0];
+				break;
+			}
+		}
+		
+		// If no rightward usable window is found, move to leftmost window.
+		if (targetWindow == null) 
+		{
+			targetWindow = useableWindows[0][0];
+		}
+	}
+	else if (selectedAction == "moveTabToPreviousWindowKeyString" ||
+	         selectedAction ==  "moveAllLeftwardTabsToPreviousWindowKeyString")
+	{
+		for (var i = useableWindows.length - 1; i >= 0; i--)
+		{
+			if (useableWindows[i][1] < 0)
+			{
+				targetWindow = useableWindows[i][0];
+				break;
+			}
+		}
+		
+		// if no leftward window is found, move to the rightmost window.
+		if (targetWindow == null) 
+		{
+			targetWindow = useableWindows[useableWindows.length - 1][0];
+		}
+	}
+	
+	if (selectedAction == "moveTabToPreviousWindowKeyString" || 
+        selectedAction == "moveTabToNextWindowKeyString")
+	{
+		chrome.tabs.move(targetTab.id, 
+	                    {
+	                        "windowId": targetWindow.id, 
+	                        "index": targetWindow.tabs.length
+	                    });
+	}
+	else if (selectedAction == "moveAllRightwardTabsToNextWindowKeyString")
+	{
+		// The value of targetWindow.tabs.length is static here; it does not increase 
+		// as we add tabs to the window. Thus, the value must be incremented manually.
+		var lengthAdjustment = 0;						
+		for (var i = 0; i < currentTabs.length; i++)
+		{
+			if (currentTabs[i].index >= targetTab.index)
+			{
+				chrome.tabs.move(currentTabs[i].id, 
+			                    {
+			                        "windowId": targetWindow.id, 
+			                        "index": targetWindow.tabs.length + lengthAdjustment
+			                    });
+				lengthAdjustment++;
+			}
+		}
+	}
+	else if (selectedAction == "moveAllLeftwardTabsToPreviousWindowKeyString")
+	{					
+		for (var i = 0; i < currentTabs.length; i++)
+		{
+			if (currentTabs[i].index <= targetTab.index)
+			{
+				chrome.tabs.move(currentTabs[i].id, 
+			                    {
+			                        "windowId": targetWindow.id, 
+			                        "index": currentTabs[i].index
+			                    });
+			}
+		}
+	}
+	
+	if (dummyTabID != 0)
+	{
+		chrome.tabs.remove(dummyTabID);
+		dummyTabID = 0;
+	}
+	
+    chrome.tabs.update(targetTab.id, {selected: true}, afterUpdate);
+}
+
+function afterNewChromeWindowCreated(win)
+{
+    chrome.tabs.getAllInWindow(win.id, getTabsFromNewWindow);
+}
+
+function getTabsFromNewWindow(tabs)
+{
+	dummyTabID = tabs[0].id;
+	chrome.windows.getAll({ populate: true }, moveTabToDifferentWindow);
+}
+
+function afterUpdate(tab)
+{
+    if (targetWindow.focused)
+    {
+        chrome.windows.update(targetWindow.id, {focused: true});
+    }
+}
+
+</script>
+</head>
+</html>

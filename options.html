@@ -1,0 +1,194 @@
+<title>QuickShift For Chrome</title>
+<style>
+body 
+{
+    margin: 10px;
+    font: 84% Arial, sans-serif;
+}
+
+.gradient 
+{
+    background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#ebeff9));
+}
+
+h1 { font-size: 200% }
+
+h1 img 
+{
+    margin: 1px 5px 0 1px;
+    vertical-align: middle
+}
+
+span.warning
+{
+    color: #FF0000;
+    margin-left: 5px;
+    font-weight: bold;
+}
+
+h2 
+{
+    border: 1px solid #9cc2ef;
+    background-color: #ebeff9;
+    padding: 3px 5px;
+    font-size: 125%
+}
+
+dl { padding: 0 5px }
+
+fieldset
+{
+    border: 1px solid #9cc2ef;
+    width: 525px;
+}
+
+.instructions
+{ 
+    max-width : 700px ;
+    margin-top : 13px ;
+    margin-bottom : 13px;
+    font: 84% Arial, sans-serif;
+    padding: 0 0 0 50px;
+}
+
+dd 
+{
+    margin-top: 13px;
+    margin-bottom: 13px
+}
+
+legend
+{
+    font-weight : bold ;
+    font-size : 125% ;
+    color: #000;
+    background: #ebeff9;
+    border: 2px solid #9cc2ef;
+    padding: 4px 20px
+}
+
+form
+{
+    padding : 0 0 0 50px ;
+}
+  
+</style>
+<script type="text/javascript" src="options.js"></script>
+<body onload="initializeUI();">
+<h1>
+  <img src="icon64.png" alt="QuickShift For Chrome">
+  QuickShift For Chrome
+</h1>
+<h2>Guidelines:
+<div class="instructions">Turn on or off features using the checkboxes. To customize a key combination, click in the appropriate box and 
+type your desired hotkey. Not all keys are allowed. (Including all the <a href="http://www.google.com/support/chrome/bin/static.py?page=guide.cs&guide=25799&topic=28650" target="_blank">built-in Chrome keyboard shortcut keys</a>.) Also be aware of potential conflicts with other exenstions you have installed and with any <em>global</em> hotkeys set by other applications. One final note: Although you are allowed to use unmodified keys (e.g. "K" or "F11"), I highly recommend modifying all your choices with Control, Shift, Alt or some combination of the three.
+</div></h2>
+<form id="options"><fieldset class="gradient"><legend>Options</legend>
+  <dl>
+    <dd>
+      <input type="checkbox" name="enableMoveTabsToWindow" checked> Move tabs between windows
+      <dl>
+        <dd>
+            <input type="checkbox"  name="allowMoveTabToPreviousWindow" checked>
+            <input type="text" name="moveTabToPreviousWindowKeyString" value="Ctrl + Alt + Left"> Move tab to previous window<br />
+            <span class="warning" id="moveTabToPreviousWindowWarning"></span>
+        </dd>
+        <dd>
+            <input type="checkbox" name="allowMoveTabToNextWindow" checked>
+            <input type="text" name="moveTabToNextWindowKeyString" value="Ctrl + Alt + Right"> Move tab to next window<br />
+            <span class="warning" id="moveTabToNextWindowWarning"></span>
+        </dd>
+        <dd>
+            <input type="checkbox" name="allowMoveAllRightwardTabsToNextWindow">
+            <input type="text" name="moveAllRightwardTabsToNextWindowKeyString" value="Ctrl + Shift + Up" disabled=true> Move all rightward tabs to next window<br />
+            <span class="warning" id="moveAllRightwardTabsToNextWindowWarning"></span>
+        </dd>
+        <dd>
+            <input type="checkbox" name="allowMoveAllLeftwardTabsToPreviousWindow">
+            <input type="text" name="moveAllLeftwardTabsToPreviousWindowKeyString" value="Ctrl + Shift + Down" disabled=true> Move all leftward tabs to previous window<br />
+            <span class="warning" id="moveAllLeftwardTabsToPreviousWindowWarning"></span>
+        </dd>
+      </dl>
+    </dd>
+    <dd>
+        <input type="checkbox" name="allowLastFocusedToggle" checked>
+        <input type="text" name="toggleToLastFocusedKeyString" value="Ctrl + B"> Toggle to last focused tab<br />
+        <span class="warning" id="toggleToLastFocusedWarning"></span>
+    </dd>
+    <dd>
+        <input type="checkbox" name="allowMergeAllTabs" checked>
+        <input type="text" name="mergeAllTabsKeyString" value="Ctrl + Alt + M"> Merge all tabs into current window<br />
+        <span class="warning" id="mergeAllTabsWarning"></span>
+    </dd>
+    <dd>
+        <input type="checkbox" name="enableReorderingTabs" checked> Reorder tabs in current window
+        <dl>
+            <dd>
+                <input type="checkbox" name="allowReorderTo1" checked>
+                <input type="text" name="reorderTo1KeyString" value="Ctrl + Alt + 1"> Move current tab to position 1<br />
+                <span class="warning" id="reorderTo1Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo2" checked>
+                <input type="text" name="reorderTo2KeyString" value="Ctrl + Alt + 2"> Move current tab to position 2<br />
+                <span class="warning" id="reorderTo2Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo3" checked>
+                <input type="text" name="reorderTo3KeyString" value="Ctrl + Alt + 3"> Move current tab to position 3<br />
+                <span class="warning" id="reorderTo3Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo4" checked>
+                <input type="text" name="reorderTo4KeyString" value="Ctrl + Alt + 4"> Move current tab to position 4<br />
+                <span class="warning" id="reorderTo4Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo5" checked>
+                <input type="text" name="reorderTo5KeyString" value="Ctrl + Alt + 5"> Move current tab to position 5<br />
+                <span class="warning" id="reorderTo5Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo6" checked>
+                <input type="text" name="reorderTo6KeyString" value="Ctrl + Alt + 6"> Move current tab to position 6<br />
+                <span class="warning" id="reorderTo6Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo7" checked>
+                <input type="text" name="reorderTo7KeyString" value="Ctrl + Alt + 7"> Move current tab to position 7<br />
+                <span class="warning" id="reorderTo7Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo8" checked>
+                <input type="text" name="reorderTo8KeyString" value="Ctrl + Alt + 8"> Move current tab to position 8<br />
+                <span class="warning" id="reorderTo8Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderTo9" checked>
+                <input type="text" name="reorderTo9KeyString" value="Ctrl + Alt + 9"> Move current tab to position 9<br />
+                <span class="warning" id="reorderTo9Warning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowReorderToLast" checked>
+                <input type="text" name="reorderToLastKeyString" value="Ctrl + Shift + End"> Move current tab to end<br />
+                <span class="warning" id="reorderToLastWarning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowMoveTabForward">
+                <input type="text" name="moveTabForwardKeyString" value="Ctrl + Shift + Right" disabled=true> Move current tab forward<br />
+                <span class="warning" id="moveTabForwardWarning"></span>
+            </dd>
+            <dd>
+                <input type="checkbox" name="allowMoveTabBackward">
+                <input type="text" name="moveTabBackwardKeyString" value="Ctrl + Shift + Left" disabled=true> Move current tab backward<br />
+                <span class="warning" id="moveTabBackwardWarning"></span>
+            </dd>
+        </dl>
+    </dd>
+  </dl>
+  <input type="button" name="saveChangesButton" value="Saved" disabled="disabled">
+  <input type="button" name="resetToDefaultButton" value="Restore Defaults">
+  <p>To report bugs, give feedback, or make suggestions, please visit the <a href="http://forums.bitterminion.com/viewforum.php?f=11"  target="_blank">QuickShift For Chrome forums</a>.</p>
+  </fieldset>
+</form>
+</body>
